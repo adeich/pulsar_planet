@@ -32,5 +32,24 @@ def LocationsGenerator(a, e, m, M):
 	step = 1
 	t = 0
 	theta = 0
+	dtheta = None
 	while step < steps:
-		pass
+		r = (a * (1 - e**2))/(1 + e * math.cos(theta))
+		x = r * math.cos(theta)
+		y = r * math.sin(theta)
+		dx = (a * e * (1 - e**2) * math.cos(theta) * math.sin(theta))/((1 + e * math.cos(theta))**2) - (a * (1 - e**2)) * math.sin(theta) / (1 + e * math.cos(theta))
+		dy = (a * e * (1 - e**2) * math.cos(theta))/(1 + e * math.cos(theta)) + (a * e * (1 - e**2) * (math.sin(theta))**2) / (1 + e * (math.cos(theta))**2)
+		V = math.sqrt((2/mu) * ((G * m * M) / r + E))
+		vx = V/math.sqrt(dx**2 + dy**2) * dx
+		vy = V/math.sqrt(dx**2 + dy**2) * dy
+		output.append([x, y, vx, vy])
+		step += 1
+		if (L/(r**2)) * dt < 2:
+			dtheta = (L/r**2) * dt
+		else:
+			dtheta = 2
+		theta += dtheta
+		t += dt
+
+
+
