@@ -1,11 +1,9 @@
 from __future__ import division
+from physical_constants import * # includes gravitational constant, G
 import math
 from array import array
 
 def LocationsGenerator(a, e, m, M):
-
-	# gravitational constant
-	G = 6.67 * 10**-11 
 
 	# reduced mass
 	mu = (m * M) / (m + M) 
@@ -25,7 +23,7 @@ def LocationsGenerator(a, e, m, M):
 	# timestep
 	dt = period / steps
 
-	output = array()
+	output = list()
 
 
 	# initialize incremental step parameters
@@ -33,6 +31,8 @@ def LocationsGenerator(a, e, m, M):
 	t = 0
 	theta = 0
 	dtheta = None
+	
+	# step around the orbital path once.
 	while step < steps:
 		r = (a * (1 - e**2))/(1 + e * math.cos(theta))
 		x = r * math.cos(theta)
@@ -42,7 +42,7 @@ def LocationsGenerator(a, e, m, M):
 		V = math.sqrt((2/mu) * ((G * m * M) / r + E))
 		vx = V/math.sqrt(dx**2 + dy**2) * dx
 		vy = V/math.sqrt(dx**2 + dy**2) * dy
-		output.append([x, y, vx, vy])
+		output.append([float(x), float(y), float(vx), float(vy)])
 		step += 1
 		if (L/(r**2)) * dt < 2:
 			dtheta = (L/r**2) * dt
@@ -51,5 +51,5 @@ def LocationsGenerator(a, e, m, M):
 		theta += dtheta
 		t += dt
 
-
+	return output
 
