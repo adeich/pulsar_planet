@@ -1,7 +1,6 @@
 from __future__ import division
 from physical_constants import * # includes gravitational constant, G
-import math
-from array import array
+import math, numpy
 
 def LocationsGenerator(a, e, m, M):
 
@@ -25,7 +24,6 @@ def LocationsGenerator(a, e, m, M):
 
 	output = list()
 
-
 	# initialize incremental step parameters
 	step = 1
 	t = 0
@@ -42,7 +40,11 @@ def LocationsGenerator(a, e, m, M):
 		V = math.sqrt((2/mu) * ((G * m * M) / r + E))
 		vx = V/math.sqrt(dx**2 + dy**2) * dx
 		vy = V/math.sqrt(dx**2 + dy**2) * dy
-		output.append([float(x), float(y), float(vx), float(vy)])
+
+		# put values into 3d vectors (with z value 0)
+		aPosition = numpy.array([float(x), float(y), 0])
+		aVelocity = numpy.array([float(vx), float(vy), 0])
+		output.append(numpy.array([aPosition, aVelocity]))
 		step += 1
 		if (L/(r**2)) * dt < 2:
 			dtheta = (L/r**2) * dt
@@ -53,3 +55,38 @@ def LocationsGenerator(a, e, m, M):
 
 	return output
 
+def GenerateRandom3Vector():
+	# Generates a uniformly random point on the unit sphere. I found this algorithm 
+	# at http://mathworld.wolfram.com/SpherePointPicking.html or google 
+	# 'random point on unit sphere'.
+
+	# generate two random numbers on (-1, 1), but make sure
+	# u**2 + v**2 < 1.
+	u, v = 100, 100
+	while u**2 + v**2 >= 1:
+		try:
+			u = (numpy.random.random() - 0.5) * 2
+			v = (numpy.random.random() - 0.5) * 2
+		except ValueError as e:
+			print e, "u = {}, v = {}".format(u, v)
+
+	# compute coordinates
+	x = 2 * u * math.sqrt(1 - u**2 - v**2)
+	y = 2 * v * math.sqrt(1 - u**2 - v**2)
+	z = 1 - 2 * (u**2 + v**2)
+
+	return numpy.array([x, y, z])
+
+# Given a body at a point (x, y, 0) in the orbital plane and with
+# velocity (vx, vy, 0), and with the star receiving a kick velocity
+# kickSpeed, this function assigns a flat-random direction in 3-space
+# to the velocity. A tuple (a, e) is returned for the new eccentricity 
+# and semi-major axis.
+
+def NewAE(m, x, y, vx, vy, kickSpeed):
+	dxk = math.random()
+	dyk = math.random()
+	dzk = math.random()
+	
+	r = (x, y, 0)
+	rdot = 5
