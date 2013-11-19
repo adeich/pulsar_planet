@@ -1,19 +1,58 @@
-import locations_generator
+import orbital_calc_support_functions as oc
 import physical_constants as pc
+import numpy as np
+import single_monte_carlo
 
-sTestFileName = 'TestLocations.txt'
+def test_locations_gen():
+	sTestFileName = 'TestLocations.txt'
 
-LocationsList = locations_generator.LocationsGenerator(pc.aEarthSun, pc.eEarth, pc.mEarth, pc.mSun)
-print "Orbit points: {}.".format(len(LocationsList))
+	LocationsList = oc.LocationsGenerator(pc.aEarthSun, pc.eEarth, pc.mEarth, pc.mSun)
+	print "Orbit points: {}.".format(len(LocationsList))
 
-f = open(sTestFileName, 'w')
-f.write(str(LocationsList))
-f.close()
+	f = open(sTestFileName, 'w')
+	f.write(str(LocationsList))
+	f.close()
 
 
-import matplotlib.pyplot as plt
-plt.plot([x[0] for x in LocationsList], [y[1] for y in LocationsList], 'ro')
-fig = plt.figure()
-# ax = fig.add_subplot(111)
-# ax.imshow()
-plt.show() 
+	import matplotlib.pyplot as plt
+	plt.plot([x[0][0] for x in LocationsList], [x[0][1] for x in LocationsList], 'ro')
+	# fig = plt.figure()
+	# ax = fig.add_subplot(111)
+	# ax.imshow()
+	plt.show() 
+
+def test_rand_3vec():
+	randVec = oc.GenerateRandom3Vector 
+
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+	n = 100
+	# for c, m, zl, zh in [('r', 'o', -2, -2), ('b', '^', -2, -2)]:
+	for i in range(30):
+		vec = randVec()
+		xs, ys, zs = vec
+		ax.scatter(xs, ys, zs, c='b')
+	
+	ax.set_xlabel('X Label')
+	ax.set_ylabel('Y Label')
+	ax.set_zlabel('Z Label')
+
+	plt.show()
+
+def test_newAE():
+	fEarthOrbitVelocity = 29 * 1000 
+	print str(oc.NewAE(pc.mEarth, pc.mSun, np.array([0, pc.aEarthSun]),
+				 np.array([fEarthOrbitVelocity, 0])))	
+
+def test_single_monte_carlo():
+	output = single_monte_carlo.SingleMonteCarlo(pc.aEarthSun, 0.1, pc.mEarth, pc.mSun, 
+													10000, bLogLocations=True)
+
+	# print percentage of planets retained.
+	print "probability of planet retention: " + str(output[0])
+
+		
+
+# test_newAE()
+test_single_monte_carlo()
+

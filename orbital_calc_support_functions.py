@@ -1,6 +1,7 @@
 from __future__ import division
 from physical_constants import * # includes gravitational constant, G
-import math, numpy
+import math, numpy, scipy
+from scipy import stats
 
 def LocationsGenerator(a, e, m, M):
 
@@ -60,8 +61,8 @@ def GenerateRandom3Vector():
 	# at http://mathworld.wolfram.com/SpherePointPicking.html or google 
 	# 'random point on unit sphere'.
 
-	# generate two random numbers on (-1, 1), but make sure
-	# u**2 + v**2 < 1.
+	# generate two random numbers on (-1, 1); skip those where
+	# u**2 + v**2 >= 1.
 	u, v = 100, 100
 	while u**2 + v**2 >= 1:
 		try:
@@ -83,10 +84,26 @@ def GenerateRandom3Vector():
 # to the velocity. A tuple (a, e) is returned for the new eccentricity 
 # and semi-major axis.
 
-def NewAE(m, x, y, vx, vy, kickSpeed):
-	dxk = math.random()
-	dyk = math.random()
-	dzk = math.random()
-	
-	r = (x, y, 0)
-	rdot = 5
+def NewAE(m, M, r_vec, v_vec):
+
+	# reduced mass.
+	mu = (m * M) / (m + M)
+
+	# energy.
+	E = - (G * m * M) / numpy.linalg.norm(r_vec) + (0.5) * mu * numpy.linalg.linalg.dot(v_vec, v_vec)
+
+	# semi-major axis a.
+	a = - (G * m * M) / (2 * E)
+
+	# angular momentum.
+	J = mu * numpy.cross(r_vec, v_vec)
+
+	# eccentricity
+	e = numpy.sqrt(1 - (numpy.linalg.norm(J)**2)/(mu**2 * (m + M) * G * a))
+
+	return (a, e)
+
+def GenerateRandomKickSpeed(fScale):
+	return scipy.stats.maxwell.rvs(scale=fScale)
+
+
