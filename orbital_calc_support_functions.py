@@ -3,6 +3,14 @@ from physical_constants import * # includes gravitational constant, G
 import math, numpy, scipy
 from scipy import stats
 
+
+# Generates, for a specified two-body orbit, a list of orbital radii and 
+# velocites (in the reduced-mass system), where each point is a constant- 
+# time away from its predecessor. This list is necessary for random sampling
+# because all non-circular orbits have constantly varying radii and velocites,
+# and there is no closed-form expression for x(t) and v(t) in the two-body
+# problem. This list must be pregenerated for each test orbit.
+
 def LocationsGenerator(a, e, m, M):
 
 	# reduced mass
@@ -56,10 +64,10 @@ def LocationsGenerator(a, e, m, M):
 
 	return output
 
+# Generates a uniformly random point on the unit sphere. I found this algorithm 
+# at http://mathworld.wolfram.com/SpherePointPicking.html . Or try googling
+# 'random point on unit sphere'.
 def GenerateRandom3Vector():
-	# Generates a uniformly random point on the unit sphere. I found this algorithm 
-	# at http://mathworld.wolfram.com/SpherePointPicking.html or google 
-	# 'random point on unit sphere'.
 
 	# generate two random numbers on (-1, 1); skip those where
 	# u**2 + v**2 >= 1.
@@ -78,12 +86,10 @@ def GenerateRandom3Vector():
 
 	return numpy.array([x, y, z])
 
-# Given a body at a point (x, y, 0) in the orbital plane and with
-# velocity (vx, vy, 0), and with the star receiving a kick velocity
-# kickSpeed, this function assigns a flat-random direction in 3-space
-# to the velocity. A tuple (a, e) is returned for the new eccentricity 
-# and semi-major axis.
 
+# Given a body at radius vector (x, y, z) and velocity vector (vx, vy, 0),
+# this function computes and returns a tuple (a, e) 
+# representing the two-body semi-major axis and eccentricity.
 def NewAE(m, M, r_vec, v_vec):
 
 	# reduced mass.
@@ -103,6 +109,9 @@ def NewAE(m, M, r_vec, v_vec):
 
 	return (a, e)
 
+# generates a float (scalar) representing the kick speed supernovae give 
+# neutron stars. This has been observationally determined to match a 
+# Maxwell distribution with a mean of 300 km/s and sigma of 190 km/s.
 def GenerateRandomKickSpeed(fScale):
 	return scipy.stats.maxwell.rvs(scale=fScale)
 
