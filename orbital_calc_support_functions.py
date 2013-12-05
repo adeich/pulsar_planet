@@ -2,6 +2,7 @@ from __future__ import division
 from physical_constants import * # includes gravitational constant, G
 import math, numpy, scipy
 from scipy import stats
+from collections import namedtuple
 
 
 # Generates, for a specified two-body orbit, a list of orbital radii and 
@@ -86,10 +87,13 @@ def GenerateRandom3Vector():
 
 	return numpy.array([x, y, z])
 
+# namedtuple data structure used by NewAE(), below.
+tAandE = namedtuple('tAandE', ['semimajoraxis', 'eccentricity'])
 
 # Given a body at radius vector (x, y, z) and velocity vector (vx, vy, 0),
 # this function computes and returns a tuple (a, e) 
 # representing the two-body semi-major axis and eccentricity.
+# Vectors may be of either 2 or 3 dimensions.
 def NewAE(m, M, r_vec, v_vec):
 
 	# reduced mass.
@@ -107,7 +111,10 @@ def NewAE(m, M, r_vec, v_vec):
 	# eccentricity
 	e = numpy.sqrt(1 - (numpy.linalg.norm(J)**2)/(mu**2 * (m + M) * G * a))
 
-	return (a, e)
+	return tAandE(a, e)
+
+def bIsOrbitBound(tAandE_tuple):
+	return tAandE_tuple.eccentricity < 1
 
 # generates a float (scalar) representing the kick speed supernovae give 
 # neutron stars. This has been observationally determined to match a 
@@ -115,4 +122,14 @@ def NewAE(m, M, r_vec, v_vec):
 def GenerateRandomKickSpeed(fScale):
 	return scipy.stats.maxwell.rvs(scale=fScale)
 
-
+# namedtuple representing all the data associated with a bound planet: 
+# (e0, a0, e1, a1, r, v) 
+OneBoundPlanet = namedtuple('OneBoundPlanet', 
+												['eccentricity_initial',
+													'semimajoraxis_initial',
+													'eccentricity_final',
+													'semimajoraxis_final',
+													'radius_at_supernova',
+													'velocity_at_supernova',
+													'kickspeed'])
+															

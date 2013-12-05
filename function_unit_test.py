@@ -1,58 +1,28 @@
+import unittest
 import orbital_calc_support_functions as oc
 import physical_constants as pc
 import numpy as np
 import single_monte_carlo
 
-def test_locations_gen():
-	sTestFileName = 'TestLocations.txt'
+class TestFunctions(unittest.TestCase):
 
-	LocationsList = oc.LocationsGenerator(pc.aEarthSun, pc.eEarth, pc.mEarth, pc.mSun)
-	print "Orbit points: {}.".format(len(LocationsList))
+	def setUp(self):
+		self.tBoundPlanet = oc.OneBoundPlanet(
+ 				eccentricity_initial = 0, 
+        eccentricity_final = 1,
+        semimajoraxis_initial = 2, 
+        semimajoraxis_final = 3,
+        radius_at_supernova = np.array([4,5,6]),
+        velocity_at_supernova = np.array([7,8,9]),
+        kickspeed = 10
+			)
+		self.tAandE = oc.AandE(semimajoraxis=5, eccentricity=0)
 
-	f = open(sTestFileName, 'w')
-	f.write(str(LocationsList))
-	f.close()
+	def test_bIsOrbitBound(self):
+		self.tAandECircular = oc.AandE(semimajoraxis = 10, eccentricity = 0)
+		self.assertTrue(oc.bIsOrbitBound(self.tAandECircular), True)
 
+if __name__ == '__main__':
+	unittest.main()
 
-	import matplotlib.pyplot as plt
-	plt.plot([x[0][0] for x in LocationsList], [x[0][1] for x in LocationsList], 'ro')
-	# fig = plt.figure()
-	# ax = fig.add_subplot(111)
-	# ax.imshow()
-	plt.show() 
-
-def test_rand_3vec():
-	randVec = oc.GenerateRandom3Vector 
-
-	fig = plt.figure()
-	ax = fig.add_subplot(111, projection='3d')
-	n = 100
-	# for c, m, zl, zh in [('r', 'o', -2, -2), ('b', '^', -2, -2)]:
-	for i in range(30):
-		vec = randVec()
-		xs, ys, zs = vec
-		ax.scatter(xs, ys, zs, c='b')
-	
-	ax.set_xlabel('X Label')
-	ax.set_ylabel('Y Label')
-	ax.set_zlabel('Z Label')
-
-	plt.show()
-
-def test_newAE():
-	fEarthOrbitVelocity = 29 * 1000 
-	print str(oc.NewAE(pc.mEarth, pc.mSun, np.array([0, pc.aEarthSun]),
-				 np.array([fEarthOrbitVelocity, 0])))	
-
-def test_single_monte_carlo():
-	output = single_monte_carlo.SingleMonteCarlo(pc.aEarthSun, 0.1, pc.mEarth, pc.mSun, 
-													10000, bLogLocations=True)
-
-	# print percentage of planets retained.
-	print "probability of planet retention: " + str(output[0])
-
-		
-
-# test_newAE()
-test_single_monte_carlo()
 

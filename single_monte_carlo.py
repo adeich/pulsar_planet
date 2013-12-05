@@ -1,17 +1,19 @@
 import numpy as np
 import orbital_calc_support_functions as oc
 import physical_constants as pc
+from collections import namedtuple
 
+def SingleMonteCarlo(a0, e0, m0, M0, iNumPoints):
 
-def SingleMonteCarlo(a0, e0, m0, M0, iNumPoints, bLogLocations=False):
-
-	# Generate a list of [[array(x, y, z), array(vx, vy, vz)], ...]
+	# Generate a list of orbit points and velocities: [[array(x, y, z), array(vx, vy, vz)], ...]
 	lLocations = oc.LocationsGenerator(a0, e0, m0, M0)
-	
-	iTotalBoundOrbits = 0
 
-	# a list for holding the optionally logged bound-orbit descriptors.
-	lBoundPointProperties = []
+	# Create a monte carlo results object.
+	ResultsObject = SingleMonteCarloResult(dGridPoint = {
+													'semimajoraxis': a0,
+													'eccentricity': e0,
+													'massOfPlanet': m0,
+													'massOfStar': M0})
 	
 	# Iterate for the number of monte carlo simulation points.
 	iCurrentOrbitPosition = 0
@@ -29,7 +31,7 @@ def SingleMonteCarlo(a0, e0, m0, M0, iNumPoints, bLogLocations=False):
 		# Random unit vector in direction uniformly spread around sphere.
 		tNormalizedRandom3Vector = oc.GenerateRandom3Vector()
 
-		# Observationally-calibrated gaussian.
+		# Observationally-determined distribution.
 		fKickSpeed = oc.GenerateRandomKickSpeed(190 * 10**3)
 
 		# New relative velocity = v0vector + (kickspeed * directionvector)
@@ -37,13 +39,50 @@ def SingleMonteCarlo(a0, e0, m0, M0, iNumPoints, bLogLocations=False):
 
 		# plug everything in to find properties of new orbit.
 		tnewAE = oc.NewAE(m0, M0, tCurrentOrbitLocation, tVelocity)
-	
-		# Record if new orbit is bound.
-		if tnewAE[1] < 1:
-			iTotalBoundOrbits += 1
-			if bLogLocations:
-				lBoundPointProperties.append([tnewAE, tCurrentOrbitLocation, tCurrentOrbitVelocity])
 
-	return (float(iTotalBoundOrbits)/iNumPoints, lBoundPointProperties)
+		# record data in results object
+		tBoundPlanetData = None
+		if oc.bIsOrbitBound(tnewAE):
+			tBoundPlanetData = oc.OneBoundPlanet(
+				eccentricity_initial = e0,
+				eccentricity_final = tnewAE.eccentricity,
+				semimajoraxis_initial = a0,
+				semimajoraxis_final = tnewAE.semimajoraxis,
+				radius_at_supernova = tCurrentOrbitLocation,		
+				velocity_at_supernova = tCurrentOrbitVelocity,
+				kickspeed = fKickSpeed
+			)
+		ResultsObject.addPlanet(tBoundPlanetData)		
 
-		
+	return ResultsObject
+
+
+# Example of dGridDimensionDict: {eccentricity: linspace(0, 1, 0.1), semimajoraxis: arange()}
+def PerformSingleMonteCarloAtEachGridPoint(dGridDimensionDict, iNumPointsPerLocation):
+	pass
+
+
+
+# each grid point gets its own result object. 
+class SingleMonteCarloResult:
+	def __init__(self, dGridPoint):
+		self.dGridPoint = dGridPoint
+		self.iTotalTries = 0
+		self.lBoundPlanets = []
+
+	def addPlanet(self,tBoundPlanet=None):
+		self.iTotalTries += 1
+		if tBoundPlanet:
+			if not isinstance(tBoundPlanet, oc.OneBoundPlanet):
+				raise TypeError
+			self.lBoundPlanets.append(tBoundPlanet)
+
+	def getTotalPlanets(self):
+		return self.iTotalTries
+
+	def getBoundPlanetTupleList(self):
+		return self.lBoundPlanets
+
+	def getAverageBoundPlanetTuple(self):
+		return OneBoundPlanet(map(np.mean, zip(*self.lBoundPlanets))) 	
+
