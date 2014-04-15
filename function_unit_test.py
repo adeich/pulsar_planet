@@ -2,7 +2,7 @@ import unittest
 import orbital_calc_support_functions as oc
 import physical_constants as pc
 import numpy as np
-import single_monte_carlo
+import monte_carlo
 
 class TestFunctions(unittest.TestCase):
 

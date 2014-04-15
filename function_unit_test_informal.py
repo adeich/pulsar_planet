@@ -1,18 +1,40 @@
 import orbital_calc_support_functions as oc
 import physical_constants as pc
 import numpy as np
-import single_monte_carlo
+import monte_carlo
+import time
 
 
+class Stopwatch:
+
+	def __init__(self):
+		self.startTime = None
+		self.endTime = None
+
+	def start(self):
+		self.startTime = time.time()
+
+	def reset(self):
+		self.startTime = 0
+
+	def getCurrentTime(self):
+		return time.time() - self.startTime
+
+	def stopAndReturnTime(self):
+		self.endTime = time.time()
+		return self.endTime - self.startTime
+
+
+		
 
 def test_locations_gen():
 	sTestFileName = 'TestLocations.txt'
 
 	LocationsList = oc.LocationsGenerator(pc.aEarthSun, pc.eEarth, pc.mEarth, pc.mSun)
-	print "Orbit points: {}.".format(len(LocationsList))
+	# print "Orbit points: {}.".format(len(LocationsList))
 
 	f = open(sTestFileName, 'w')
-	f.write(str(LocationsList))
+	f.write('\n'.join([str(x[2]) for x in LocationsList]))
 	f.close()
 
 
@@ -46,16 +68,34 @@ def test_newAE():
 	return str(oc.NewAE(pc.mEarth, pc.mSun, np.array([0, pc.aEarthSun, 0]),
 				 np.array([fEarthOrbitVelocity, 0, 0])))	
 
-def test_single_monte_carlo():
-	output = single_monte_carlo.SingleMonteCarlo(pc.aEarthSun, 0.1, pc.mEarth, pc.mSun, 
-													1000)
-
-	print str(output)
+def test_monte_carlo(iNumIterations):
 		
-	output = single_monte_carlo.SingleMonteCarlo(pc.aEarthSun, 0.1, pc.mEarth, pc.mSun, 
-													1000)
+	oStopwatch = Stopwatch()
+	oStopwatch.start()
 
-	return output
-	# print str(output.getAverageBoundPlanetTuple())
+	result_object = monte_carlo.SingleRawMonteCarloResult(pc.aEarthSun, 0.1, pc.mEarth, pc.mSun, 
+													iNumIterations)
+
+	fTotalTime = oStopwatch.stopAndReturnTime()
+
+	lBoundPlanetAnalysis = result_object.GenerateAnalysisOfBoundPlanets()
+
+#	print 'a planet tuple: ' + str(lBoundPlanetTuples)
+	print 'total time: ' + str(fTotalTime)
+	print 'which means {} seconds/planet.'.format(fTotalTime/iNumIterations)
+	print 'total planets: ' + str(result_object.GetTotalPlanets())
+	lStrings = sorted(['{}:\t\t\t\t{}'.format(x, y) for x, y in lBoundPlanetAnalysis.items()])
+	print '\n'.join(lStrings)
+	print '\n'
+	#print 'median bound planet rel vel: ' + str(result_object.GetMedianBoundPlanetRelVelMag())
+	#print 'median bound planet: ' + str(result_object.GetMedianBoundPlanetTuple())
+	#print 'Mean unbound planet: ' + str(result_object.GetMeanUnboundPlanetTuple())
+
 	
 
+if __name__ == '__main__':
+	#test_locations_gen()
+	#test_monte_carlo(10)
+	#test_monte_carlo(100)
+	#test_monte_carlo(1000)
+	test_monte_carlo(10000)

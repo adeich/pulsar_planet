@@ -4,6 +4,36 @@ import math, numpy, scipy
 from scipy import stats
 from collections import namedtuple
 
+class PrecompiledRandom:
+	
+	def __init__(self):
+		self.oNumbers = self.NumbersGenerator()
+
+	def NumbersGenerator(self):
+		with open('precompiled_maxwell.txt', 'r') as f:
+			numbers = f.readlines()
+		for i in numbers:
+			yield float(i.strip())
+
+	# generates a float (scalar) representing the kick speed supernovae give 
+	# neutron stars. This has been observationally determined to match a 
+	# Maxwell distribution with a mean of 300 km/s and sigma of 190 km/s.
+
+	# UPDATE: to speed up the computation, this now pulls numbers from a 
+	# pre-generated list of numbers.
+	def GenerateRandomKickSpeed(self):
+		# ORIGINAL CALL: scipy.stats.maxwell.rvs(scale=fScale)
+		try: 
+			x = self.oNumbers.next()
+		except StopIteration:
+			# if we run out of numbers, reinstantiate the generator and start over.
+			self.oNumbers = NumbersGenerator()
+			x = self.oNumbers.next()
+
+		return x
+
+oPrecompiledRandom = PrecompiledRandom()
+
 
 # Generates, for a specified two-body orbit, a list of orbital radii and 
 # velocites (in the reduced-mass system), where each point is a constant- 
@@ -54,7 +84,7 @@ def LocationsGenerator(a, e, m, M):
 		# put values into 3d vectors (with z value 0)
 		aPosition = numpy.array([float(x), float(y), 0])
 		aVelocity = numpy.array([float(vx), float(vy), 0])
-		output.append(numpy.array([aPosition, aVelocity]))
+		output.append(numpy.array([aPosition, aVelocity, theta]))
 		step += 1
 		if (L/(r**2)) * dt < 2:
 			dtheta = (L/r**2) * dt
@@ -87,8 +117,10 @@ def GenerateRandom3Vector():
 
 	return numpy.array([x, y, z])
 
+
 # namedtuple data structure used by NewAE(), below.
 tAandE = namedtuple('tAandE', ['semimajoraxis', 'eccentricity'])
+
 
 # Given a body at radius vector (x, y, z) and velocity vector (vx, vy, 0),
 # this function computes and returns a tuple (a, e) 
@@ -116,20 +148,17 @@ def NewAE(m, M, r_vec, v_vec):
 def bIsOrbitBound(tAandE_tuple):
 	return tAandE_tuple.eccentricity < 1
 
-# generates a float (scalar) representing the kick speed supernovae give 
-# neutron stars. This has been observationally determined to match a 
-# Maxwell distribution with a mean of 300 km/s and sigma of 190 km/s.
-def GenerateRandomKickSpeed(fScale):
-	return scipy.stats.maxwell.rvs(scale=fScale)
 
 # namedtuple representing all the data associated with a bound planet: 
 # (e0, a0, e1, a1, r, v) 
 OneBoundPlanet = namedtuple('OneBoundPlanet', 
-												['eccentricity_initial',
-													'semimajoraxis_initial',
-													'eccentricity_final',
-													'semimajoraxis_final',
-													'radius_at_supernova',
-													'velocity_at_supernova',
-													'kickspeed'])
+	['eccentricity_initial',
+	'semimajoraxis_initial',
+	'eccentricity_final',
+	'semimajoraxis_final',
+	'radius_at_supernova',
+	'velocity_at_supernova',
+	'kickspeed',
+	'tRelativeVelocity',
+	'orbit_location_theta'])
 															
