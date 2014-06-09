@@ -1,5 +1,5 @@
 from __future__ import division
-from physical_constants import * # includes gravitational constant, G
+from constants import * # includes gravitational constant, G
 import math, numpy, scipy
 from scipy import stats
 from collections import namedtuple
@@ -27,7 +27,7 @@ class PrecompiledRandom:
 			x = self.oNumbers.next()
 		except StopIteration:
 			# if we run out of numbers, reinstantiate the generator and start over.
-			self.oNumbers = NumbersGenerator()
+			self.oNumbers = self.NumbersGenerator()
 			x = self.oNumbers.next()
 
 		return x

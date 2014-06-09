@@ -1,5 +1,5 @@
 import orbital_calc_support_functions as oc
-import physical_constants as pc
+import constants as pc
 import numpy as np
 import monte_carlo
 import time
@@ -30,7 +30,8 @@ class Stopwatch:
 def test_locations_gen():
 	sTestFileName = 'TestLocations.txt'
 
-	LocationsList = oc.LocationsGenerator(pc.aEarthSun, pc.eEarth, pc.mEarth, pc.mSun)
+	#LocationsList = oc.LocationsGenerator(pc.aEarthSun, pc.eEarth, pc.mEarth, pc.mSun)
+	LocationsList = oc.LocationsGenerator(50000000000.0, 1.0, 5.9999999999999999e+24, 1.9000000000000001e+30)
 	# print "Orbit points: {}.".format(len(LocationsList))
 
 	f = open(sTestFileName, 'w')
@@ -84,7 +85,7 @@ def test_monte_carlo(iNumIterations):
 	print 'total time: ' + str(fTotalTime)
 	print 'which means {} seconds/planet.'.format(fTotalTime/iNumIterations)
 	print 'total planets: ' + str(result_object.GetTotalPlanets())
-	lStrings = sorted(['{}:\t\t\t\t{}'.format(x, y) for x, y in lBoundPlanetAnalysis.items()])
+	lStrings = sorted(['{0:{1}}\t\t{2}'.format(x + ":", 40, y) for x, y in lBoundPlanetAnalysis.items()])
 	print '\n'.join(lStrings)
 	print '\n'
 	#print 'median bound planet rel vel: ' + str(result_object.GetMedianBoundPlanetRelVelMag())

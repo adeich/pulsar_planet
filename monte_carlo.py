@@ -1,6 +1,6 @@
 import numpy as np
 import orbital_calc_support_functions as oc
-import physical_constants as pc
+from constants import dField_codes as codes 
 from collections import namedtuple
 import csv
 
@@ -18,7 +18,6 @@ class SingleRawMonteCarloResult:
 		self.dUnboundPlanetData = {'total_rel_vel':0, 'total_kick_speed': 0, 'total_abs_theta':0}
 		self.lBoundPlanets = [] 
 		self.RunSingleMonteCarlo(self.lBoundPlanets, self.dUnboundPlanetData, self.iNumIterations, self.dParamDict)
-
 
 	def RunSingleMonteCarlo(self, lBoundPlanetList, dUnboundPlanetDict, iNumIterations, dParamDict):
 
@@ -69,24 +68,33 @@ class SingleRawMonteCarloResult:
 				dUnboundPlanetDict['total_kick_speed'] += fKickSpeed
 				dUnboundPlanetDict['total_abs_theta'] += np.absolute(np.pi - lLocations[iCurrentOrbitPosition][2])
 
+	def GenerateParamSpaceCode(self, dParamPoint, iNumIters):
+		return 'a={a}e={e}m={m}M={M}I={I}'.format(a = dParamPoint['a0'], e = dParamPoint['e0'],
+			m = dParamPoint['m0'], M = dParamPoint['M0'], I = iNumIters)
+
+
 	def GenerateAnalysisOfBoundPlanets(self):
 		lRelativeVelocityMagnitudes = [np.absolute(np.linalg.norm(tPlanet.tRelativeVelocity)) for tPlanet in self.lBoundPlanets]
 		lThetaDistFromPi = [np.absolute(np.pi - tPlanet.orbit_location_theta) for tPlanet in self.lBoundPlanets]
 		lKickVelocities = [tPlanet.kickspeed for tPlanet in self.lBoundPlanets]
 
 		dOutput = {}
-		dOutput['unbound kick speed, avg'] = self.dUnboundPlanetData['total_kick_speed']/float(self.iNumIterations)
-		dOutput['unbound rel vel, avg'] = 	self.dUnboundPlanetData['total_rel_vel']/float(self.iNumIterations)
-		dOutput['unbound theta dist from pi, avg'] = self.dUnboundPlanetData['total_abs_theta']/float(self.iNumIterations)
-		dOutput['bound absolute angle from pi, median'] = np.median(lThetaDistFromPi)
-		dOutput['bound absolute angle from pi, std'] = np.std(lThetaDistFromPi)
-		dOutput['bound absolute angle from pi, avg'] = np.mean(lThetaDistFromPi)
-		dOutput['bound kick velocity, median'] = np.median(lKickVelocities)
-		dOutput['bound kick velocity, avg'] = np.mean(lKickVelocities)
-		dOutput['bound kick velocity, std'] = np.std(lKickVelocities)
-		dOutput['bound abs rel velocity, median'] = np.median(lRelativeVelocityMagnitudes)
-		dOutput['bound abs rel velocity, avg'] = np.mean(lRelativeVelocityMagnitudes)
-		dOutput['bound abs rel velocity, std'] = np.std(lRelativeVelocityMagnitudes)
+
+		# get hash values from dict in constants.py file.
+		dOutput[codes['hashed location in parameter space']] = self.GenerateParamSpaceCode(self.dParamDict, self.iNumIterations)
+		dOutput[codes['number of simulation points']] = self.iNumIterations
+		dOutput[codes['unbound kick speed, avg']] = self.dUnboundPlanetData['total_kick_speed']/float(self.iNumIterations)
+		dOutput[codes['unbound rel vel, avg']] = 	self.dUnboundPlanetData['total_rel_vel']/float(self.iNumIterations)
+		dOutput[codes['unbound theta dist from pi, avg']] = self.dUnboundPlanetData['total_abs_theta']/float(self.iNumIterations)
+		dOutput[codes['bound absolute angle from pi, median']] = np.median(lThetaDistFromPi)
+		dOutput[codes['bound absolute angle from pi, std']] = np.std(lThetaDistFromPi)
+		dOutput[codes['bound absolute angle from pi, avg']] = np.mean(lThetaDistFromPi)
+		dOutput[codes['bound kick velocity, median']] = np.median(lKickVelocities)
+		dOutput[codes['bound kick velocity, avg']] = np.mean(lKickVelocities)
+		dOutput[codes['bound kick velocity, std']] = np.std(lKickVelocities)
+		dOutput[codes['bound abs rel velocity, median']] = np.median(lRelativeVelocityMagnitudes)
+		dOutput[codes['bound abs rel velocity, avg']] = np.mean(lRelativeVelocityMagnitudes)
+		dOutput[codes['bound abs rel velocity, std']] = np.std(lRelativeVelocityMagnitudes)
 
 		return dOutput
 

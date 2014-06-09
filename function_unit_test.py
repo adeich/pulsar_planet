@@ -1,6 +1,6 @@
 import unittest
 import orbital_calc_support_functions as oc
-import physical_constants as pc
+import constants as pc
 import numpy as np
 import monte_carlo
 
