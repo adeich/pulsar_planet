@@ -1,14 +1,31 @@
+import time
+import datetime
 from itertools import product as CartesianProduct
 from numpy import linspace
 import monte_carlo
 import constants as PC
 import CustomCSVFileWriter as CSV
 
-def PrintUpdate(tGridPoint, lFullGrid):
+class stopwatch:
+	def __init__(self):
+		self.start_time = time.time() 
+	def start(self):
+		self.start_time = time.time()
+	def getTimeElapsed(self):
+		return time.time() - self.start_time
+
+
+def PrintUpdate(tGridPoint, lFullGrid, fDurationOfMostRecent):
 	# figure out where we are in grid.
 	iIndex = [i for i, v in enumerate(lFullGrid) if v == tGridPoint][0]
 	fPercent = 100 * (float(iIndex) / len(lFullGrid))
-	print "{:2.1f}% completed ({})/({}).".format(fPercent, iIndex, len(lFullGrid))
+	print "{:2.1f}% completed ({})/({}). time was {} seconds. Est. time remaining: {}. ".format(
+		fPercent,
+		iIndex, 
+		len(lFullGrid),
+		fDurationOfMostRecent,
+		str(datetime.timedelta(seconds = fDurationOfMostRecent * (len(lFullGrid) - iIndex)))
+		)
 
 def PerformOverParamGrid(eDict, aDict, mDict, MDict, iNumIters, oFile):
 
@@ -45,10 +62,10 @@ def PerformOverParamGrid(eDict, aDict, mDict, MDict, iNumIters, oFile):
 	# small (< 1000 tuples)
 	lFullGrid = [tPoint for tPoint in gridGenerator]
 
+	oStopwatch = stopwatch()
+
 	for tGridPoint in lFullGrid:
-		# TranslateGridPointToString
-		# MCFileWriter(...)
-		PrintUpdate(tGridPoint, lFullGrid) 
+ 		oStopwatch.start()
 		try:
 			oInstance = monte_carlo.SingleRawMonteCarloResult(
 				a0=tGridPoint[0], e0=tGridPoint[1], m0=tGridPoint[2], M0=tGridPoint[3], 
@@ -56,6 +73,7 @@ def PerformOverParamGrid(eDict, aDict, mDict, MDict, iNumIters, oFile):
 			# oFile.write('{}'.format(str(oInstance.GenerateAnalysisOfBoundPlanets())))
 			csv_line = CSV.GenerateCSVString(oInstance.GenerateAnalysisOfBoundPlanets())
 			oFile.write(csv_line); oFile.write('\n')
+			PrintUpdate(tGridPoint, lFullGrid, oStopwatch.getTimeElapsed()) 
 			
 		except BaseException:
 			print "grid point: {}".format(str(tGridPoint))
@@ -66,10 +84,10 @@ def PerformOverParamGrid(eDict, aDict, mDict, MDict, iNumIters, oFile):
 if __name__ == '__main__':
 	with open('ResultsData.csv', 'w') as oFile:
 		PerformOverParamGrid(
-			eDict = {'lowerBound':0.01, 'upperBound':0.95, 'number':3}, # e must be 0<=e<1!
-			aDict = {'lowerBound':PC.aEarthSun/3, 'upperBound':PC.aEarthSun*10, 'number':1},
-			mDict = {'lowerBound':PC.mEarth, 'upperBound':PC.mEarth*100, 'number':2},
-			MDict = {'lowerBound':PC.mSun, 'upperBound':PC.mSun*5, 'number':1},
+			eDict = {'lowerBound':0.01, 'upperBound':0.95, 'number':20}, # e must be 0<=e<1!
+			aDict = {'lowerBound':PC.aEarthSun/3, 'upperBound':PC.aEarthSun*10, 'number':50},
+			mDict = {'lowerBound':PC.mEarth, 'upperBound':PC.mEarth*100, 'number':4},
+			MDict = {'lowerBound':PC.mSun, 'upperBound':PC.mSun*5, 'number':2},
 			iNumIters = 10000,
 			oFile = oFile
 		)

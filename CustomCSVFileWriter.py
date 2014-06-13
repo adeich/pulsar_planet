@@ -6,6 +6,7 @@ from constants import dField_codes as codes
 lLineContent = [
 	'hashed location in parameter space',
 	'number of simulation points',
+	'number of bound planets',
 	'unbound kick speed, avg',
 	'unbound rel vel, avg',
 	'unbound theta dist from pi, avg',

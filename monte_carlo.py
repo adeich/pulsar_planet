@@ -1,6 +1,7 @@
 import numpy as np
 import orbital_calc_support_functions as oc
 from constants import dField_codes as codes 
+from constants import ParamSpaceCoder as PSC
 from collections import namedtuple
 import csv
 
@@ -13,7 +14,7 @@ class SingleRawMonteCarloResult:
 
 	# Run the simulation as the final step of the object init.
 	def __init__(self, a0, e0, m0, M0, iNumIterations):
-		self.dParamDict = {'a0':a0, 'e0':e0, 'm0':m0, 'M0':M0}
+		self.dParamDict = {'a':a0, 'e':e0, 'm':m0, 'M':M0}
 		self.iNumIterations = iNumIterations
 		self.dUnboundPlanetData = {'total_rel_vel':0, 'total_kick_speed': 0, 'total_abs_theta':0}
 		self.lBoundPlanets = [] 
@@ -23,7 +24,7 @@ class SingleRawMonteCarloResult:
 
 		# Generate a list of orbit points and velocities: [[array(x, y, z), array(vx, vy, vz)], ...]
 		d = dParamDict
-		lLocations = oc.LocationsGenerator(d['a0'], d['e0'], d['m0'], d['M0'])
+		lLocations = oc.LocationsGenerator(d['a'], d['e'], d['m'], d['M'])
 
 		# Iterate for the number of monte carlo simulation points.
 		iCurrentOrbitPosition = 0
@@ -46,15 +47,15 @@ class SingleRawMonteCarloResult:
 			tVelocity = np.add(tCurrentOrbitVelocity, np.multiply(fKickSpeed, tNormalizedRandom3Vector))
 
 			# plug everything in to find properties of new orbit.
-			tnewAE = oc.NewAE(d['m0'], oc.mNeutronStar, tCurrentOrbitLocation, tVelocity)
+			tnewAE = oc.NewAE(d['m'], oc.mNeutronStar, tCurrentOrbitLocation, tVelocity)
 
 			# record data in results object
 			tBoundPlanetData = None
 			if oc.bIsOrbitBound(tnewAE):
 				tBoundPlanetData = oc.OneBoundPlanet(
-					eccentricity_initial = d['e0'],
+					eccentricity_initial = d['e'],
 					eccentricity_final = tnewAE.eccentricity,
-					semimajoraxis_initial = d['a0'],
+					semimajoraxis_initial = d['a'],
 					semimajoraxis_final = tnewAE.semimajoraxis,
 					radius_at_supernova = tCurrentOrbitLocation,		
 					velocity_at_supernova = tCurrentOrbitVelocity,
@@ -68,10 +69,6 @@ class SingleRawMonteCarloResult:
 				dUnboundPlanetDict['total_kick_speed'] += fKickSpeed
 				dUnboundPlanetDict['total_abs_theta'] += np.absolute(np.pi - lLocations[iCurrentOrbitPosition][2])
 
-	def GenerateParamSpaceCode(self, dParamPoint, iNumIters):
-		return 'a={a}e={e}m={m}M={M}I={I}'.format(a = dParamPoint['a0'], e = dParamPoint['e0'],
-			m = dParamPoint['m0'], M = dParamPoint['M0'], I = iNumIters)
-
 
 	def GenerateAnalysisOfBoundPlanets(self):
 		lRelativeVelocityMagnitudes = [np.absolute(np.linalg.norm(tPlanet.tRelativeVelocity)) for tPlanet in self.lBoundPlanets]
@@ -81,8 +78,9 @@ class SingleRawMonteCarloResult:
 		dOutput = {}
 
 		# get hash values from dict in constants.py file.
-		dOutput[codes['hashed location in parameter space']] = self.GenerateParamSpaceCode(self.dParamDict, self.iNumIterations)
+		dOutput[codes['hashed location in parameter space']] = PSC.GenerateParamSpaceCode(self.dParamDict, self.iNumIterations)
 		dOutput[codes['number of simulation points']] = self.iNumIterations
+		dOutput[codes['number of bound planets']] = len(self.lBoundPlanets)
 		dOutput[codes['unbound kick speed, avg']] = self.dUnboundPlanetData['total_kick_speed']/float(self.iNumIterations)
 		dOutput[codes['unbound rel vel, avg']] = 	self.dUnboundPlanetData['total_rel_vel']/float(self.iNumIterations)
 		dOutput[codes['unbound theta dist from pi, avg']] = self.dUnboundPlanetData['total_abs_theta']/float(self.iNumIterations)

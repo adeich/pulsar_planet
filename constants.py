@@ -1,4 +1,5 @@
 from bidict import bidict
+import re
 
 # gravitational constant
 G = 6.67 * 10**-11 
@@ -14,6 +15,7 @@ mNeutronStar = 1.4 * mSun
 dField_codes = bidict({
 	'hashed location in parameter space': 'LOCATION',
 	'number of simulation points': 'num',
+	'number of bound planets': 'numB',
 	'unbound kick speed, avg': 'U_KS_A',
 	'unbound rel vel, avg': 'U_RV_A',
 	'unbound theta dist from pi, avg': 'U_TDP_A',
@@ -27,3 +29,30 @@ dField_codes = bidict({
 	'bound abs rel velocity, avg': 'B_ARV_A',
 	'bound abs rel velocity, std': 'B_ARV_S'
 })
+
+class ParamSpaceCode:
+
+	def __init__(self):
+		# in this regex, the (?P<xxx>) business names a group xxx.
+		self.regex = re.compile('a(?P<a>.*)_e(?P<e>.*)_m(?P<m>.*)_M(?P<M>.*)_I(?P<I>.*)')
+
+	# input dParamPoint is a dictionary.
+	def GenerateParamSpaceCode(self, dParamPoint, iNumIters):
+		return 'a{a}_e{e}_m{m}_M{M}_I{I}'.format(a = dParamPoint['a'], e = dParamPoint['e'],
+			m = dParamPoint['m'], M = dParamPoint['M'], I = iNumIters)
+
+	def ParseParamSpaceCode(self, sCode):
+		result = self.regex.search(sCode)
+		return result.groupdict()
+
+	def test(self):
+		dParamPoint = {'a':1, 'e':22, 'm': 333, 'M': 4444}
+		sCode = self.GenerateParamSpaceCode(dParamPoint, 5000)
+		dNewParamPoint = self.ParseParamSpaceCode(sCode)
+		for sKey, value in dParamPoint.iteritems():
+			if not int(dNewParamPoint[sKey]) == int(value):
+				raise BaseException('{}!={} dict1: {}, code: {}, dict2: {}'.format(
+					dNewParamPoint[sKey], value, dParamPoint, sCode, dNewParamPoint))
+		print 'test ran.' 
+
+ParamSpaceCoder = ParamSpaceCode()
